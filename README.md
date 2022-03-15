@@ -1,7 +1,8 @@
 # adb-file-manager
 
+<p>
 <img src="images/logo_icon.png"" alt="scrcpy" align="right" />
-
+</p>
 
 Cross Platform Desktop app for android file transfer using adb
 

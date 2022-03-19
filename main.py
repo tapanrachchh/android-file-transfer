@@ -2,10 +2,11 @@
 from glob import escape
 from re import L
 import sys
+from tkinter import Widget
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QAction, QApplication, QLabel, QMenu, QMessageBox, QToolBar, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QLineEdit,QAction, QApplication, QLabel, QMenu, QMessageBox, QToolBar, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout,QListWidgetItem,QListWidget
 from PyQt5.QtGui import QColor, QFont, QIcon, QImage, QPainter, QPen, QPixmap,QPalette
 from PyQt5.QtCore import QPoint, QProcess, QRectF, QSize, Qt, pyqtSlot
 import os
@@ -132,6 +133,136 @@ class App(QDialog):
         self.drawings=[]
 
 
+
+
+
+    def pre_pull(self,btn):
+        output = self.p3.readAllStandardOutput()
+        y=str(output)
+        y=y[2:-1]
+        xs = y.split("\\n")
+        xs=xs[0:len(xs)-1]
+        xs[0]=xs[0].replace("\\r","")
+        self.pull(xs[0],btn)
+
+
+    def onSearchTextChanged(self,text):
+
+        for row in range(self.listWidget.count()):
+            it = self.listWidget.item(row)
+            widget = self.listWidget.itemWidget(it)
+            if text: 
+                it.setHidden(not self.filter(text, it.id))
+            else:
+                it.setHidden(False)
+
+    def filter(self, text, keywords):
+
+        return text in keywords
+
+    def afterRemoval(self,packageId):
+        print("Removed",packageId)
+        output = bytearray(self.processRemoveApp.readAllStandardOutput())
+        print(output)
+
+        print(output)
+    def disableApp(self,packageId):
+        print("disable this",packageId)
+        self.processRemoveApp = QProcess()
+        self.processRemoveApp.finished.connect( lambda : self.afterRemoval(packageId))
+        self.processRemoveApp.start(adb_path,["shell","pm","disable-user","--user","0",packageId])
+
+    def uninstallApp(self,packageId):
+        print("uninstall this",packageId)
+        self.processRemoveApp = QProcess()
+        self.processRemoveApp.finished.connect( lambda : self.afterRemoval(packageId))
+        self.processRemoveApp.start(adb_path,["shell","pm","uninstall ","--user","0",packageId])
+
+
+
+    def afterFetch(self):
+        print("AFTER FETCH")
+
+        output = bytearray(self.processGetAllPackages.readAllStandardOutput())
+
+        # output = self.processGetAllPackages.readAllStandardOutput()
+        output = output.decode("ascii")
+
+        self.sList = output.split("\n")
+
+                
+        global window
+        window = QWidget()
+        self.listWidget = QListWidget()
+        window.setWindowTitle("Remove System Apps")
+    
+        for e in self.sList:
+
+
+            e=e.replace("package:","")
+            horizontalLayout = QHBoxLayout(window)
+            l1 = QLabel(e)
+            b1 = QPushButton("Disable")
+            b1.clicked.connect(lambda checked,txt=e: self.disableApp(txt.strip()))
+            b2 = QPushButton("Uninstall")
+            b2.clicked.connect(lambda checked,txt=e: self.uninstallApp(txt.strip()))
+            sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+            sizePolicy.setHorizontalStretch(1)
+            l1.setSizePolicy(sizePolicy)
+            horizontalLayout.addWidget(l1)
+            horizontalLayout.addWidget(b1)
+            horizontalLayout.addWidget(b2)
+
+            wid = QWidget()
+            wid.setLayout(horizontalLayout)
+
+
+            
+
+            temp = QListWidgetItem()
+
+            temp.setSizeHint(wid.sizeHint())
+
+            temp.id = e
+
+            self.listWidget.addItem(temp)
+            self.listWidget.setItemWidget(temp,wid)
+
+            # QListWidgetItem(wid,self.listWidget)
+    
+
+        
+        self.listWidget.itemClicked.connect(self.listWidgetItemClick)
+
+        window_layout = QVBoxLayout(window)
+
+        searchEdit = QLineEdit(self)
+        searchEdit.textChanged.connect(self.onSearchTextChanged)
+
+
+        window_layout.addWidget(searchEdit)
+
+        window_layout.addWidget(self.listWidget)
+        window.setLayout(window_layout)
+        window.resize(800, 600)
+
+    
+        window.show()
+        # return window
+
+
+    def onRemove(self):
+
+
+        self.processGetAllPackages = QProcess()
+        self.processGetAllPackages.finished.connect( lambda : self.afterFetch())
+        self.processGetAllPackages.start(adb_path,["shell","pm","list","packages"])
+
+
+
+    def listWidgetItemClick(self,item):
+        print("CLICKED",item.id)
+
     def onAbout(self):
         text = "<center>" \
            "<h1> ADB File Manger</h1>" \
@@ -165,8 +296,10 @@ class App(QDialog):
         button3.clicked.connect(lambda : self.goto("/sdcard/download/"))
         button4 = QtWidgets.QPushButton("DCIM")
         button4.clicked.connect(lambda : self.goto("/sdcard/DCIM/"))
-        button5 = QtWidgets.QPushButton("About")
-        button5.clicked.connect(self.onAbout)
+        button5 = QtWidgets.QPushButton("Remove System Apps")
+        button5.clicked.connect(self.onRemove)
+        button6 = QtWidgets.QPushButton("About")
+        button6.clicked.connect(self.onAbout)
 
 
         self.button6 = LoadingButton("PUSH")

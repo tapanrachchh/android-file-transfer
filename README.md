@@ -6,6 +6,9 @@
 
 Cross Platform Desktop app for android file transfer using adb
 
+Features:
+ - Push/Pull Files to your Android Device
+ - Uninstall/Disable System apps
 
 ## Requirements
 
@@ -20,6 +23,7 @@ Make sure you [enabled adb debugging][enable-adb] on your device(s).
 
 ## Screenshots
 ![image](images/s.png)
+![image](images/rsa.png)
 
 
 ## Run Locally

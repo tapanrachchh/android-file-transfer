@@ -120,7 +120,7 @@ class App(QDialog):
 
     def __init__(self):
         super().__init__()
-
+        self.setAcceptDrops(True)
         self.title = 'ADB File Manager'
         self.left = 10
         self.top = 10
@@ -134,7 +134,16 @@ class App(QDialog):
         self.drawings=[]
 
 
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
 
+    
+    def dropEvent(self, event):
+        files = [u.toLocalFile() for u in event.mimeData().urls()]
+        self.push(files[0])
 
 
 

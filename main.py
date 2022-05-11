@@ -6,7 +6,7 @@ from tkinter import Widget
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QLineEdit,QAction, QApplication, QLabel, QMenu, QMessageBox, QToolBar, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout,QListWidgetItem,QListWidget
+from PyQt5.QtWidgets import QMainWindow,QLineEdit,QAction, QApplication, QLabel, QMenu, QMessageBox, QToolBar, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout,QListWidgetItem,QListWidget
 from PyQt5.QtGui import QColor, QFont, QIcon, QImage, QPainter, QPen, QPixmap,QPalette
 from PyQt5.QtCore import QPoint, QProcess, QRectF, QSize, Qt, pyqtSlot
 import os
@@ -120,6 +120,7 @@ class App(QDialog):
 
     def __init__(self):
         super().__init__()
+
         self.title = 'ADB File Manager'
         self.left = 10
         self.top = 10
@@ -131,6 +132,7 @@ class App(QDialog):
         self.yc=0
         self.num_c=5
         self.drawings=[]
+
 
 
 
@@ -528,6 +530,7 @@ class App(QDialog):
         self.p2 = QProcess()
         self.p2.finished.connect( lambda : self.process_finished_pull(btn))
         name=name.replace("\\r","")
+        print("check",name,home)
         self.p2.start(adb_path,["pull",name,home])
 
 
@@ -537,6 +540,9 @@ class App(QDialog):
         self.listOut(self.currentPath)
 
     def process_finished_pull(self,btn):
+        output = self.p2.readAllStandardOutput()
+        y=str(output)
+        print("p2 output",y)
         btn.setText("PULLED")
         btn.stop()
 

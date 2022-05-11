@@ -1,6 +1,5 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import sys
 
 block_cipher = None
 
@@ -28,34 +27,31 @@ a.datas += [
 ('./images/exclude.png', './images/exclude.png', 'DATA'),
 ('./images/push.png', './images/push.png', 'DATA'),
 ('./images/loader.gif', './images/loader.gif', 'DATA'),
-
+('./tools/win/adb.exe', './tools/win/adb.exe', 'DATA'),
+('./tools/win/AdbWinApi.dll', './tools/win/AdbWinApi.dll', 'DATA'),
+('./tools/win/AdbWinUsbApi.dll', './tools/win/AdbWinUsbApi.dll', 'DATA'),
 ]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
-
-
-if sys.platform == 'darwin':
-  exe = EXE(pyz,
-            a.scripts,
-            a.binaries,
-            a.zipfiles,
-            a.datas,
-            name='ADB File Manager',
-            debug=False,
-            strip=False,
-            upx=True,
-            runtime_tmpdir=None,
-            console=False,
-            icon='images/logo.icns')
-
-if sys.platform == 'darwin':
-   app = BUNDLE(exe,
-                name='ADB File Manager.app',
-                version='1.1.0',
-                info_plist={
-                  'NSHighResolutionCapable': 'True'
-                },
-                icon='images/logo.icns')
-
+exe = EXE(pyz,
+          a.scripts,
+          a.binaries,
+          a.zipfiles,
+          a.datas,  
+          [],
+          name='ADB File Manager',
+          debug=True,
+          bootloader_ignore_signals=False,
+          strip=False,
+          upx=True,
+          upx_exclude=[],
+          runtime_tmpdir=None,
+          console=True,
+          disable_windowed_traceback=False,
+          target_arch=None,
+          codesign_identity=None,
+          entitlements_file=None,
+          icon='images/logo.ico'
+           )

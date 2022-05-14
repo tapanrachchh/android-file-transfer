@@ -22,8 +22,8 @@ Make sure you [enabled adb debugging][enable-adb] on your device(s).
 
 
 ## Screenshots
-![image](images/s.png)
-![image](images/rsa.png)
+![image](screenshots/1.png)
+![image](screenshots/2.png)
 
 
 ## Run Locally

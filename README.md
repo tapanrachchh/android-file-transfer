@@ -20,7 +20,6 @@ Make sure you [enabled adb debugging][enable-adb] on your device(s).
 ## Download
 
 [<img alt="alt_text" width="40px" src="images/windows.ico" />](dist/ADB%20File%20Manager.exe?raw=1) [<img alt="alt_text" width="40px" src="images/linux-48.ico" />](dist/ADB%20File%20Manager%201.1.0%20-%20Linux%20-OLD_VERSION?raw=1) [<img alt="alt_text" width="40px" src="images/mac-os-48.ico" />](dist/ADB%20File%20Manager%201.1.0%20Mac%20App%20File%20%20-OLD_VERSION.zip?raw=1)
-ADB File Manager 1.1.0 Mac App File -OLD_VERSION.zip
 
 ## Screenshots
 

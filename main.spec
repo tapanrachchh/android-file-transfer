@@ -20,16 +20,17 @@ a = Analysis(['main.py'],
 
 a.datas += [
 ('./images/back.png', './images/back.png', 'DATA'),
-('./images/file.png', './images/file.png', 'DATA'),
+('./images/back-white.png', './images/back-white.png', 'DATA'),
 ('./images/folder.png', './images/folder.png', 'DATA'),
 ('./images/logo.png', './images/logo.png', 'DATA'),
-('./images/tri.png', './images/tri.png', 'DATA'),
+('./images/peak.png', './images/peak.png', 'DATA'),
 ('./images/exclude.png', './images/exclude.png', 'DATA'),
 ('./images/push.png', './images/push.png', 'DATA'),
-('./images/loader.gif', './images/loader.gif', 'DATA'),
 ('./tools/win/adb.exe', './tools/win/adb.exe', 'DATA'),
 ('./tools/win/AdbWinApi.dll', './tools/win/AdbWinApi.dll', 'DATA'),
 ('./tools/win/AdbWinUsbApi.dll', './tools/win/AdbWinUsbApi.dll', 'DATA'),
+('./images/process_file_transfer.gif', './images/process_file_transfer.gif', 'DATA'),
+('./images/process_general.gif', './images/process_general.gif', 'DATA'),
 ]
 
 pyz = PYZ(a.pure, a.zipped_data,

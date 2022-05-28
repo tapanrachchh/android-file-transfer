@@ -1,126 +1,27 @@
 
 from glob import escape
-from re import L
+import os
 import sys
-from tkinter import Widget
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QMainWindow,QLineEdit,QAction, QApplication, QLabel, QMenu, QMessageBox, QToolBar, QWidget, QPushButton, QHBoxLayout, QGroupBox, QDialog, QVBoxLayout, QGridLayout,QListWidgetItem,QListWidget
-from PyQt5.QtGui import QColor, QFont, QIcon, QImage, QPainter, QPen, QPixmap,QPalette
-from PyQt5.QtCore import QPoint, QProcess, QRectF, QSize, Qt, pyqtSlot
-import os
-from os.path import expanduser
-
-#Getting Home Directory to Pull files into it
-home = expanduser("~")
-
-#Change it to adb executable path
-adb_path="C:/Users/Hp Desk/AppData/Local/Android/Sdk/platform-tools/adb"
-adb_path="./tools/win/adb.exe"
-
-def resource_path(relative_path):
-
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, relative_path)
-    return os.path.join(os.path.abspath('.'), relative_path)
-
-adb_path=resource_path(adb_path)
-
-# adb_path="C:/Users/Hp Desk/AppData/Local/Android/Sdk/platform-tools/adb"
-
-# LoadingButton Snippet by eyllanesc source:stackoverflow
-class LoadingButton(QtWidgets.QPushButton):
-    @QtCore.pyqtSlot()
-    def start(self):
-        if hasattr(self, "_movie"):
-            self._movie.start()
-
-    @QtCore.pyqtSlot()
-    def stop(self):
-        if hasattr(self, "_movie"):
-            self._movie.stop()
-            self.setIcon(QtGui.QIcon())
-
-    def setGif(self, filename):
-        if not hasattr(self, "_movie"):
-            self._movie = QtGui.QMovie(self)
-            self._movie.setFileName(filename)
-            self._movie.frameChanged.connect(self.on_frameChanged)
-            if self._movie.loopCount() != -1:
-                self._movie.finished.connect(self.start)
-        self.stop()
-
-    @QtCore.pyqtSlot(int)
-    def on_frameChanged(self, frameNumber):
-        self.setIcon(QtGui.QIcon(self._movie.currentPixmap()))
+from PyQt5.QtWidgets import QMainWindow,QLineEdit, QApplication, QLabel, QMessageBox, QWidget, QPushButton, QHBoxLayout, QVBoxLayout,QListWidgetItem,QListWidget
+from PyQt5.QtGui import QColor,  QIcon, QPixmap,QPalette
+from PyQt5.QtCore import  QProcess, QSize, Qt
+import darkdetect
+from modules.ProcessWindow import ProcessWindow
+from modules.helper import resource_path
+import modules.helper as helper
+from modules.CustomDraggableWidget import CustomDraggableWidget
+from modules.CustomFileWidget import CustomFileWidget
 
 
-format_dic={"video":["mp4","mov","avi","mkv"],"music":["mp3","ogg","wav"],"doc":["pdf"],"image":["jpg","jpeg","png","gif"]}
-color_dic={"video":"darkRed","music":"darkMagenta","doc":"darkGreen","unkown":"darkGray","image":"darkCyan"}
+class App(QMainWindow):
 
-
-
-
-class Custom(QWidget):
-    def __init__(self,ext="a"):
-        QWidget.__init__(self, parent=None)
-        self.type="unkown"
-        for e in format_dic.keys():
-            if ext in format_dic[e]:
-                self.type=e
-                break
-        if len(ext)>3:
-            ext=ext[0:2]+".."
-        self.ext=ext
-
-    def paintEvent(self, event):
-
-        
-        qp = QPainter()
-        qp.begin(self)
-        image  = QImage(resource_path('images/exclude.png'))
-        # image.setColorCount(2)
-        # image.setColor( 0, QtGui.qRgba(255,0,0,255) )
-        # image.setColor( 1, QtGui.qRgba(0,0,0,0) )
-        path = QtGui.QPainterPath()
-        path.addRect((self.frameGeometry().width()/2)-18, 0, 35,45)
-        qp.fillPath(path,QColor(color_dic[self.type]))
-        # qp.setCompositionMode(QPainter.CompositionMode_Xor)
-
-
-    
-        image = image.scaled(QSize(36,45))
-        # for i in range(0,30):
-        #     for k in range(0,25):
-        #         image.setPixel(i, k, value)
-
-        qp.drawImage(QPoint(int(self.frameGeometry().width()/2)-18,0), image)
-        qp.setCompositionMode(QPainter.CompositionMode_SourceOver)
-
-        image  = QImage(resource_path('images/tri.png'))
-        image = image.scaled(QSize(36,45))
-        qp.drawImage(QPoint(int(self.frameGeometry().width()/2)-18,0), image)
-
-
-        pen = QPen(Qt.white)
-        pen.setWidth(2)
-        qp.setPen(pen)        
-        font = QFont()
-        font.setBold(True)
-        font.setPointSize(12)
-        qp.setFont(font)
-        qp.drawText(QRectF(0.0,0.0,self.frameGeometry().width(),50.0), Qt.AlignCenter|Qt.AlignTop, self.ext)
-        qp.end()
-
-
-
-
-class App(QDialog):
-
-    def __init__(self):
+    def __init__(self,theme_type):
         super().__init__()
         self.setAcceptDrops(True)
+        self.theme_type=theme_type
         self.title = 'ADB File Manager'
         self.left = 10
         self.top = 10
@@ -132,19 +33,28 @@ class App(QDialog):
         self.yc=0
         self.num_c=5
         self.drawings=[]
+        
 
+    def closeEvent(self, event):
+        for instance in ProcessWindow.instances:
+            try:
+                instance.close()
+            except:
+                print("Exception while closing instace")
 
     def dragEnterEvent(self, event):
-        if event.mimeData().hasUrls():
-            event.accept()
+        if not event.source():
+            if event.mimeData().hasUrls():
+                event.accept()
+            else:
+                event.ignore()
         else:
-            event.ignore()
+            return
 
-    
+
     def dropEvent(self, event):
         files = [u.toLocalFile() for u in event.mimeData().urls()]
         self.push(files[0])
-
 
 
     def pre_pull(self,btn):
@@ -175,19 +85,20 @@ class App(QDialog):
         print("Removed",packageId)
         output = bytearray(self.processRemoveApp.readAllStandardOutput())
         print(output)
+        self.searchEdit.setText("")
 
         print(output)
     def disableApp(self,packageId):
         print("disable this",packageId)
         self.processRemoveApp = QProcess()
         self.processRemoveApp.finished.connect( lambda : self.afterRemoval(packageId))
-        self.processRemoveApp.start(adb_path,["shell","pm","disable-user","--user","0",packageId])
+        self.processRemoveApp.start(helper.adb_path,["shell","pm","disable-user","--user","0",packageId])
 
     def uninstallApp(self,packageId):
         print("uninstall this",packageId)
         self.processRemoveApp = QProcess()
         self.processRemoveApp.finished.connect( lambda : self.afterRemoval(packageId))
-        self.processRemoveApp.start(adb_path,["shell","pm","uninstall ","--user","0",packageId])
+        self.processRemoveApp.start(helper.adb_path,["shell","pm","uninstall ","--user","0",packageId])
 
 
 
@@ -195,10 +106,7 @@ class App(QDialog):
         print("AFTER FETCH")
 
         output = bytearray(self.processGetAllPackages.readAllStandardOutput())
-
-        # output = self.processGetAllPackages.readAllStandardOutput()
         output = output.decode("ascii")
-
         self.sList = output.split("\n")
 
                 
@@ -247,11 +155,11 @@ class App(QDialog):
 
         window_layout = QVBoxLayout(window)
 
-        searchEdit = QLineEdit(self)
-        searchEdit.textChanged.connect(self.onSearchTextChanged)
+        self.searchEdit = QLineEdit(self)
+        self.searchEdit.textChanged.connect(self.onSearchTextChanged)
 
 
-        window_layout.addWidget(searchEdit)
+        window_layout.addWidget(self.searchEdit)
 
         window_layout.addWidget(self.listWidget)
         window.setLayout(window_layout)
@@ -267,40 +175,60 @@ class App(QDialog):
 
         self.processGetAllPackages = QProcess()
         self.processGetAllPackages.finished.connect( lambda : self.afterFetch())
-        self.processGetAllPackages.start(adb_path,["shell","pm","list","packages"])
+        self.processGetAllPackages.start(helper.adb_path,["shell","pm","list","packages"])
 
 
 
     def listWidgetItemClick(self,item):
         print("CLICKED",item.id)
 
-    def onAbout(self):
+
+    def showProcess(self,processText):
+
+        process_window = ProcessWindow(processText,processType="GENERAL")
+        process_window.show()
+
+        return process_window
+
+
+    def hideProcess(self,process_window):
+        process_window.close()
+
+    def onAbout(self,processText="Transfering File..."):
+
         text = "<center>" \
-           "<h1> ADB File Manger</h1>" \
+           "<h1> ADB File Manager</h1>" \
            "&#8291;" \
            "</center>" \
-           "<p> <center>Version 1.1.0 </center><br/></p>" \
-           "<p> <center>LAST UPDATE : Added Color-Cordinated File Icons, Ability to Push Files and Bug fixes </center><br/></p>" \
+           "<p> <center>Version 1.2.0 </center><br/></p>" \
+           "<p> <center> Android file transfer using Adb </center><br/></p>" \
+            "<p> <center>NOTE: Make sure you enable adb debugging on your device.</center><br/></p>" \
 
-        QMessageBox.about(self, "About ADB File Manger", text)
+
+        QMessageBox.about(self, "About - ADB File Manger", text)
+
+
         
     def initUI(self):
         
         self.setWindowIcon(QtGui.QIcon(resource_path(resource_path('images/logo.png'))))
         self.setWindowTitle(self.title)
-        self.layout = QtWidgets.QVBoxLayout(self)
+
+
+
+        self.layout = QtWidgets.QVBoxLayout()
         self.scrollArea = QtWidgets.QScrollArea(self)
         self.scrollArea.setWidgetResizable(True)
         self.scrollAreaWidgetContents = QtWidgets.QWidget()
         self.glayout = QtWidgets.QGridLayout(self.scrollAreaWidgetContents)
-        # self.setStyleSheet("background-color:white; ")
         self.scrollArea.setWidget(self.scrollAreaWidgetContents)
-
-
         horizontalLayout = QtWidgets.QHBoxLayout()
         button1 = QtWidgets.QPushButton("Go Back")
         button1.clicked.connect(self.goBack)
-        button1.setIcon(QIcon(resource_path('images/back.png')))
+        if self.theme_type=="Dark":
+            button1.setIcon(QIcon(resource_path('images/back-white.png')))
+        else:
+            button1.setIcon(QIcon(resource_path('images/back.png')))
         button2 = QtWidgets.QPushButton("SD Card")
         button2.clicked.connect(lambda : self.goto("/sdcard/"))
         button3 = QtWidgets.QPushButton("Download")
@@ -309,15 +237,9 @@ class App(QDialog):
         button4.clicked.connect(lambda : self.goto("/sdcard/DCIM/"))
         button5 = QtWidgets.QPushButton("Remove System Apps")
         button5.clicked.connect(self.onRemove)
-        button6 = QtWidgets.QPushButton("About")
-        button6.clicked.connect(self.onAbout)
+        aboutButton = QtWidgets.QPushButton("About")
+        aboutButton.clicked.connect(self.onAbout)
 
-
-        self.button6 = LoadingButton("PUSH")
-        self.button6.clicked.connect(self.onPush)
-        self.button6.setIcon(QIcon(resource_path('images/loader.gif')))
-
-        self.button6.setGif(resource_path('images/loader.gif'))
         
 
 
@@ -325,8 +247,9 @@ class App(QDialog):
         horizontalLayout.addWidget(button2)
         horizontalLayout.addWidget(button3)
         horizontalLayout.addWidget(button4)
-        horizontalLayout.addWidget(self.button6)
         horizontalLayout.addWidget(button5)
+
+        horizontalLayout.addWidget(aboutButton)
 
         wid = QWidget()
         wid.setLayout(horizontalLayout)
@@ -341,18 +264,15 @@ class App(QDialog):
         self.listOut("/")
 
 
+
+        widgetcheck = QWidget()
+        widgetcheck.setLayout(self.layout)
+        self.setCentralWidget(widgetcheck)
+
+
         
         self.showMaximized()
         self.show()
-
-    def onPush(self):
-        dlg = QtWidgets.QFileDialog()
-        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
-
-        if dlg.exec_():
-            filenames = dlg.selectedFiles()
-            self.push(filenames[0])
-                
 
 
 
@@ -396,21 +316,19 @@ class App(QDialog):
     def createFileItem(self,name):
 
 
-        picLabel = QLabel(self)
-        pixmap = QPixmap(resource_path('images/file.png'))
-        pixmapScaled = pixmap.scaled(QSize(35,45))
 
-
-        picLabel.setPixmap(pixmapScaled)
+        escaped_name=self.escape(name)
+        np=self.currentPath+escaped_name
         textLabel = QLabel()
-        picLabel.setAlignment(QtCore.Qt.AlignCenter)
+        dWid = CustomDraggableWidget(np)
+        draggbleVLayout = QVBoxLayout()  
+
+        
+
+        
         textLabel.setAlignment(QtCore.Qt.AlignCenter)
         textLabel.setText(name)
 
-
-        button2 = LoadingButton("PULL")
-        button2.clicked.connect(lambda : self.gotAbsolutePath(name,button2))
-        button2.setGif(resource_path('images/loader.gif'))
 
 
         arg="?"
@@ -420,10 +338,16 @@ class App(QDialog):
 
 
 
+
         vLayout = QVBoxLayout()
-        vLayout.addWidget(Custom(arg))
-        vLayout.addWidget(textLabel)
-        vLayout.addWidget(button2)
+
+        draggbleVLayout.addWidget(CustomFileWidget(self.theme_type,arg))
+        draggbleVLayout.addWidget(textLabel)
+        dWid.setLayout(draggbleVLayout)
+        # vLayout.addWidget(Custom(arg))
+        # vLayout2 = QVBoxLayout()
+        vLayout.addWidget(dWid)
+        # vLayout.addWidget(button2)
 
         a = QWidget()
         a.setLayout(vLayout)
@@ -445,30 +369,47 @@ class App(QDialog):
 
         arr = name.split("/")
 
+        # picLabel.setContentsMargins(100, -1, -1, 0)
+
         textLabel.setText(arr[-2])
         vLayout = QVBoxLayout()
         vLayout.addWidget(picLabel)
+
         vLayout.addWidget(textLabel)
+        vLayout.setSpacing(0)
+        vLayout.setContentsMargins(0,0,0,20)
 
 
-        button2 = LoadingButton("PULL")
-        button2.clicked.connect(lambda : self.pull(name,button2))
-        button2.setGif(resource_path('images/loader.gif'))
-        vLayout.addWidget(button2)
 
 
-        a = QWidget()
-        a.setLayout(vLayout)
-        a.mousePressEvent =  lambda event:self.listOut(name)
 
-        return a
+
+
+
+        dWid = CustomDraggableWidget(name,func=self.listOut)
+
+
+
+        # vLayout.addWidget(button2)
+
+
+
+
+        dWid.setLayout(vLayout)
+
+        # dWid.mousePressEvent =  lambda event:self.listOut(name)
+
+        # return a
+        return dWid
 
 
     def getDeviceName(self):
+        process_window = self.showProcess("Getting Device Name")
+
         self.p0 = QProcess()
-        self.p0.finished.connect(self.get_device_name_finished)
+        self.p0.finished.connect(lambda :  self.on_found_device(process_window))
         self.p0.errorOccurred.connect(self.onError)
-        self.p0.start(adb_path,["devices","-l"])
+        self.p0.start(helper.adb_path,["devices","-l"])
 
 
 
@@ -477,7 +418,7 @@ class App(QDialog):
         QMessageBox.critical(self, "Error", "INSTALL ADB OR VERIFY IT'S EXECUTABLE PATH")
 
 
-    def get_device_name_finished(self):
+    def on_found_device(self,process_window):
         output = self.p0.readAllStandardOutput()
         y=str(output)
         y=y[2:-1]
@@ -487,7 +428,12 @@ class App(QDialog):
         term_len=len(term)
         occ = y.find(term)
         if occ==-1:
-            print("FOUND")
+            self.hideProcess(process_window)
+
+            print("NOT FOUND")
+            QMessageBox.critical(self, "Error", "Couldn't get device name. Try fetching it again?")
+            self.getDeviceName()
+            self.listOut("/")
         else:
             occ=occ+term_len
             space_occ = y[occ:].find(" ")
@@ -495,12 +441,14 @@ class App(QDialog):
             if y[occ:space_occ]:
                 self.setWindowTitle(y[occ:space_occ])
 
+        self.hideProcess(process_window)
+
 
     def listOut(self,name):
         self.p = QProcess()
         self.p.finished.connect(self.list_out_process_finished)
         name=self.escape(name)   
-        self.p.start(adb_path,["shell","ls","-d",name+"*/"])
+        self.p.start(helper.adb_path,["shell","ls","-d",name+"*/"])
         self.currentPath=name
 
 
@@ -511,7 +459,7 @@ class App(QDialog):
         self.p3 = QProcess()
         self.p3.finished.connect( lambda : self.pre_pull(btn))
         print("pp",np)
-        self.p3.start(adb_path,["shell","ls",np])
+        self.p3.start(helper.adb_path,["shell","ls",np])
 
 
 
@@ -526,11 +474,17 @@ class App(QDialog):
 
 
     def push(self,filePath):
-        self.button6.setEnabled(False)
-        self.button6.start()
+
+        patharr = os.path.split(filePath)
+        # if patharr[1]=="":
+        #     patharr = os.path.split(patharr[0])
+
+        process_window_push = ProcessWindow(patharr[1],"FILE_TRANSFER")
+        process_window_push.show()
         self.p4 = QProcess()
-        self.p4.finished.connect(self.process_finished_push)
-        self.p4.start(adb_path,["push",filePath,self.currentPath])
+        self.p4.finished.connect(lambda : self.process_finished_push(process_window_push))
+        self.p4.start(helper.adb_path,["push",filePath,self.currentPath])
+
 
 
     def pull(self,name,btn):
@@ -539,14 +493,14 @@ class App(QDialog):
         self.p2 = QProcess()
         self.p2.finished.connect( lambda : self.process_finished_pull(btn))
         name=name.replace("\\r","")
-        print("check",name,home)
-        self.p2.start(adb_path,["pull",name,home])
+        print("check",name,helper.home)
+        self.p2.start(helper.adb_path,["pull",name,helper.home])
 
 
-    def process_finished_push(self):
-        self.button6.setEnabled(True)
-        self.button6.stop()
+    def process_finished_push(self,process_window_push):
+        process_window_push.close()
         self.listOut(self.currentPath)
+        
 
     def process_finished_pull(self,btn):
         output = self.p2.readAllStandardOutput()
@@ -616,29 +570,32 @@ class App(QDialog):
    
         self.p1 = QProcess()
         self.p1.finished.connect(self.process_finished_for_files)   
-        self.p1.start(adb_path,["shell","ls","-p",self.currentPath,"|","grep","-v","/"])
+        self.p1.start(helper.adb_path,["shell","ls","-p",self.currentPath,"|","grep","-v","/"])
         
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    app.setStyle("Fusion")
 
-    # Now use a palette to switch to dark colors:
-    palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(53, 53, 53))
-    palette.setColor(QPalette.WindowText, Qt.white)
-    palette.setColor(QPalette.Base, QColor(25, 25, 25))
-    palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-    palette.setColor(QPalette.ToolTipBase, Qt.black)
-    palette.setColor(QPalette.ToolTipText, Qt.white)
-    palette.setColor(QPalette.Text, Qt.white)
-    palette.setColor(QPalette.Button, QColor(53, 53, 53))
-    palette.setColor(QPalette.ButtonText, Qt.white)
-    palette.setColor(QPalette.BrightText, Qt.red)
-    palette.setColor(QPalette.Link, QColor(42, 130, 218))
-    palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-    palette.setColor(QPalette.HighlightedText, Qt.black)
-    app.setPalette(palette)
-    ex = App()
+    app = QApplication(sys.argv)
+    theme_type = darkdetect.theme()
+    print("theme_type",theme_type)
+    if theme_type == 'Dark':
+        app.setStyle("Fusion")
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(53, 53, 53))
+        palette.setColor(QPalette.WindowText, Qt.white)
+        palette.setColor(QPalette.Base, QColor(25, 25, 25))
+        palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+        palette.setColor(QPalette.ToolTipBase, Qt.black)
+        palette.setColor(QPalette.ToolTipText, Qt.white)
+        palette.setColor(QPalette.Text, Qt.white)
+        palette.setColor(QPalette.Button, QColor(53, 53, 53))
+        palette.setColor(QPalette.ButtonText, Qt.white)
+        palette.setColor(QPalette.BrightText, Qt.red)
+        palette.setColor(QPalette.Link, QColor(42, 130, 218))
+        palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+        palette.setColor(QPalette.HighlightedText, Qt.black)
+        app.setPalette(palette)
+    ex = App(theme_type)
+
     sys.exit(app.exec_())

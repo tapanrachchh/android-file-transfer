@@ -25,7 +25,7 @@ Make sure you [enabled adb debugging][enable-adb] on your device(s).
 Install requirements
 
 ```bash
-  python install -r requirements.txt
+  pip3 install -r requirements.txt
 ```
 
 Change the adb_path in main.py to adb executable path

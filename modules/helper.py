@@ -19,7 +19,17 @@ def resource_path(relative_path):
 
 #NOTE: Change it to adb executable path
 adb_path="C:/Users/Hp Desk/AppData/Local/Android/Sdk/platform-tools/adb"
-adb_path="./tools/win/adb.exe"
+
+if os.name == "posix":
+    adb_path="./tools/linux/adb"
+
+
+if os.name == "nt":
+    adb_path="./tools/win/adb.exe"
+
+
+
+
 adb_path=resource_path(adb_path)
 # adb_path="C:/Users/Hp Desk/AppData/Local/Android/Sdk/platform-tools/adb"
 

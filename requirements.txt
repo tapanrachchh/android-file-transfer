@@ -8,3 +8,5 @@ PyQt5-Qt5==5.15.2
 PyQt5-sip==12.9.0
 typing_extensions==4.0.1
 zipp==3.7.0
+watchdog
+mouse

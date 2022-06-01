@@ -418,6 +418,7 @@ class App(QMainWindow):
         QMessageBox.critical(self, "Error", "INSTALL ADB OR VERIFY IT'S EXECUTABLE PATH")
 
 
+
     def on_found_device(self,process_window):
         output = self.p0.readAllStandardOutput()
         y=str(output)
@@ -430,10 +431,29 @@ class App(QMainWindow):
         if occ==-1:
             self.hideProcess(process_window)
 
+
+            def msgbtn(i):
+                print ("Button pressed is:",i.text())
+                if i.text()=="Exit":
+                    sys.exit(0)
+                else:
+                    self.getDeviceName()
+                    self.listOut("/")
+
+
             print("NOT FOUND")
-            QMessageBox.critical(self, "Error", "Couldn't get device name. Try fetching it again?")
-            self.getDeviceName()
-            self.listOut("/")
+            msg = QMessageBox()
+            msg.setIcon(QMessageBox.Information)
+            msg.setText("Could not find any connected device on this computer")
+            msg.setWindowTitle("Device Not Found")
+            msg.setInformativeText("NOTE: Turn on USB debuging in the developer options")
+            msg.addButton("Exit",QMessageBox.RejectRole)
+            msg.addButton("Try Again",QMessageBox.AcceptRole)
+            msg.buttonClicked.connect(msgbtn)
+            retval = msg.exec_()
+
+
+        
         else:
             occ=occ+term_len
             space_occ = y[occ:].find(" ")

@@ -26,6 +26,10 @@ if os.name == "posix":
 
 if os.name == "nt":
     adb_path="./tools/win/adb.exe"
+    
+
+if sys.platform == "darwin":
+    adb_path="./tools/mac/adb"
 
 
 

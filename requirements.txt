@@ -10,3 +10,4 @@ typing_extensions==4.0.1
 zipp==3.7.0
 watchdog
 mouse
+darkdetect

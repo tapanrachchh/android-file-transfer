@@ -14,10 +14,6 @@ Make sure you [enabled adb debugging][enable-adb] on your device(s).
 
 [enable-adb]: https://developer.android.com/studio/command-line/adb.html#Enabling
 
-## Download
-
-[<img alt="alt_text" width="40px" src="images/windows.ico" />](dist/ADB%20File%20Manager.exe?raw=1)
-
 ## Run Locally
 
 Install requirements
